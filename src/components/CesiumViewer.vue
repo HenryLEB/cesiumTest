@@ -83,7 +83,7 @@ const setupMouseInteractions = () => {
   // 鼠标滚轮事件（缩放）
   canvas.addEventListener('wheel', (event: WheelEvent) => {
     event.preventDefault()
-    zoomModel(event.deltaY)
+    zoomModel(event.deltaY, event.clientX, event.clientY)
   }, { passive: false })
 
   // 右键菜单禁用
@@ -100,29 +100,47 @@ const setupMouseInteractions = () => {
 }
 
 // 缩放模型
-const zoomModel = (wheelDelta: number) => {
+const zoomModel = (wheelDelta: number, clientX: number, clientY: number) => {
   if (!viewer.value) return
 
-  const camera = viewer.value.camera
+  const viewerInstance = viewer.value
+  const camera = viewerInstance.camera
   const zoomSpeed = 0.1
 
-  // 获取模型中心点作为缩放目标
-  const primitives = viewer.value.scene.primitives
-  if (primitives.length === 0) return
+  let zoomTarget: Cesium.Cartesian3
   
-  const tileset = primitives.get(0) as Cesium.Cesium3DTileset
-  const boundingSphere = tileset.boundingSphere
-  if (!boundingSphere) return
+  // 获取鼠标位置对应的3D坐标（使用 pickPosition 获取准确的3D位置）
+  const mousePosition = new Cesium.Cartesian2(clientX, clientY)
+  const pickPosition = viewerInstance.scene.pickPosition(mousePosition)
   
-  // 计算相机到模型中心的向量
-  const centerToCamera = Cesium.Cartesian3.subtract(
+  if (Cesium.defined(pickPosition)) {
+    // 如果成功获取到鼠标位置的3D坐标，使用它作为缩放焦点
+    zoomTarget = pickPosition
+  } else {
+    // 如果没有获取到，使用模型中心点作为备选
+    const primitives = viewerInstance.scene.primitives
+    if (primitives.length > 0) {
+      const tileset = primitives.get(0) as Cesium.Cesium3DTileset
+      const boundingSphere = tileset.boundingSphere
+      if (boundingSphere) {
+        zoomTarget = boundingSphere.center
+      } else {
+        return
+      }
+    } else {
+      return
+    }
+  }
+  
+  // 计算相机到缩放目标的向量
+  const targetToCamera = Cesium.Cartesian3.subtract(
     camera.position,
-    boundingSphere.center,
+    zoomTarget,
     new Cesium.Cartesian3()
   )
   
   // 计算当前距离
-  const distance = Cesium.Cartesian3.magnitude(centerToCamera)
+  const distance = Cesium.Cartesian3.magnitude(targetToCamera)
   
   // 计算缩放后的新距离
   const zoomFactor = wheelDelta > 0 ? 1 + zoomSpeed : 1 - zoomSpeed
@@ -132,9 +150,9 @@ const zoomModel = (wheelDelta: number) => {
   const clampedDistance = Cesium.Math.clamp(newDistance, 10, 10000)
   
   // 计算新的相机位置
-  const direction = Cesium.Cartesian3.normalize(centerToCamera, new Cesium.Cartesian3())
+  const direction = Cesium.Cartesian3.normalize(targetToCamera, new Cesium.Cartesian3())
   const newPosition = Cesium.Cartesian3.add(
-    boundingSphere.center,
+    zoomTarget,
     Cesium.Cartesian3.multiplyByScalar(direction, clampedDistance, new Cesium.Cartesian3()),
     new Cesium.Cartesian3()
   )
