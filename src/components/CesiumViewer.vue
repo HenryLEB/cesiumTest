@@ -48,6 +48,16 @@ onMounted(async () => {
   // 设置背景颜色（保持纯色背景）
   viewer.value.scene.backgroundColor = Cesium.Color.fromCssColorString('#000000')
 
+  // 添加调试代码
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.value.scene.canvas)
+  handler.setInputAction(function (movement: any) {
+    const pickedFeature = viewer.value?.scene.pick(movement.position)
+    if (Cesium.defined(pickedFeature)) {
+      console.log('属性：', pickedFeature.getPropertyNames?.().map((n: any) => [n, pickedFeature.getProperty(n)]))
+      console.log('b3dm 文件路径：', pickedFeature.content?.url)
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
+
   // 获取摄像头控制器
   cameraController.value = viewer.value.scene.screenSpaceCameraController
 
@@ -97,6 +107,73 @@ const setupMouseInteractions = () => {
       resetView()
     }
   })
+
+  // 鼠标点击事件
+  const handler = new Cesium.ScreenSpaceEventHandler(canvas)
+  handler.setInputAction((click: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
+    // 检测点击的对象
+    const pickedObject = viewer.value?.scene.pick(click.position)
+    if (Cesium.defined(pickedObject)) {
+      console.log('点击信息:', pickedObject)
+      
+      // 获取点击位置的3D坐标
+      const pickPosition = viewer.value?.scene.pickPosition(click.position)
+      if (Cesium.defined(pickPosition)) {
+        console.log('点击位置坐标:', {
+          x: pickPosition.x,
+          y: pickPosition.y,
+          z: pickPosition.z
+        })
+      }
+      
+      // 检查是否有name属性
+      console.log('=== 检查name属性 ===')
+      if (pickedObject.getPropertyNames && pickedObject.getProperty) {
+        const propertyNames = pickedObject.getPropertyNames()
+        console.log('所有属性名:', propertyNames)
+        if (propertyNames.includes('name')) {
+          const name = pickedObject.getProperty('name')
+          console.log('模型名称:', name)
+        } else {
+          console.log('模型没有name属性')
+        }
+      } else if (pickedObject.name) {
+        console.log('模型名称:', pickedObject.name)
+      } else if (pickedObject.primitive && pickedObject.primitive.name) {
+        console.log('模型名称:', pickedObject.primitive.name)
+      } else if (pickedObject.tile && pickedObject.tile.content && pickedObject.tile.content.name) {
+        console.log('模型名称:', pickedObject.tile.content.name)
+      } else {
+        console.log('模型没有name属性')
+      }
+      
+      // 方法4: 检查pickedObject的所有属性
+      console.log('方法4: 检查pickedObject的所有属性')
+      console.log('pickedObject所有属性:', Object.keys(pickedObject))
+      
+      // 遍历pickedObject的所有属性，寻找可能包含b3dm信息的属性
+      for (const key in pickedObject) {
+        if (Object.prototype.hasOwnProperty.call(pickedObject, key)) {
+          const value = pickedObject[key]
+          if (value && typeof value === 'object') {
+            // 检查是否包含uri或url属性
+            if (value.uri) {
+              console.log(`找到uri属性 (${key}.uri):`, value.uri)
+            } else if (value.url) {
+              console.log(`找到url属性 (${key}.url):`, value.url)
+            }
+            // 检查是否包含content属性
+            if (value.content) {
+              console.log(`找到content属性 (${key}.content):`, value.content)
+              if (value.content.uri) {
+                console.log(`找到content.uri (${key}.content.uri):`, value.content.uri)
+              }
+            }
+          }
+        }
+      }
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
 }
 
 // 缩放模型
