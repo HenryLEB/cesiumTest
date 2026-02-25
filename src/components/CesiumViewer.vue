@@ -92,6 +92,42 @@ const buildingConfigs: BuildingConfig[] = [
       waterConsumption: '1149m³',
       population: '56人'
     }
+  },
+  {
+    id: 'building2',
+    name: 'B1栋',
+    tilesetUrl: '/保利b3dm/tileset.json',
+    center: {
+      x: -2306930.0,
+      y: 5418720.0,
+      z: 2440500.0
+    },
+    dimensions: {
+      length: 55,
+      width: 50,
+      height: 160
+    },
+    rotation: {
+      heading: 0.4,
+      pitch: 0,
+      roll: 0
+    },
+    offset: {
+      x: -83,
+      y: 50,
+      z: 90
+    },
+    color: '#FF6B6B',
+    marker: {
+      longitude: 113.060277174873093,
+      latitude: 22.645483701548006,
+      height: 100
+    },
+    info: {
+      powerConsumption: '18500kw-h',
+      waterConsumption: '950m³',
+      population: '42人'
+    }
   }
 ]
 
@@ -517,22 +553,32 @@ const tilesModel = () => {
 const cylinderModel = () => {
   if (!viewer.value) return
   
-  viewer.value.entities.add({
-    id: 'building1',
-    name: '{"cesiumType": "cylinderBuilding"}',
-    position: Cesium.Cartesian3.fromDegrees(113.06090721905448, 22.645399902809583, 45),
-    orientation: Cesium.Transforms.headingPitchRollQuaternion(
-      Cesium.Cartesian3.fromDegrees(113.06090721905448, 22.645399902809583, 45),
-      new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(140), Cesium.Math.toRadians(0), Cesium.Math.toRadians(0))
-    ),
-    cylinder: {
-      length: 80, // 圆柱体高度
-      topRadius: 23, // 圆柱体顶部半径
-      bottomRadius: 23, // 圆柱体底部半径
-      material: Cesium.Color.fromCssColorString('rgba(255, 255, 255, 0.01)'), // 材质
-      slices: 100, // 圆柱周围圆圈分段数
-      numberOfVerticalLines: 100 // 圆柱垂直线分段数
-    }
+  buildingConfigs.forEach(config => {
+    viewer.value.entities.add({
+      id: `${config.id}_cylinder`,
+      name: JSON.stringify({ cesiumType: 'cylinderBuilding', buildingId: config.id }),
+      position: Cesium.Cartesian3.fromDegrees(
+        config.marker.longitude,
+        config.marker.latitude,
+        config.marker.height - 20
+      ),
+      orientation: Cesium.Transforms.headingPitchRollQuaternion(
+        Cesium.Cartesian3.fromDegrees(
+          config.marker.longitude,
+          config.marker.latitude,
+          config.marker.height - 20
+        ),
+        new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(140), Cesium.Math.toRadians(0), Cesium.Math.toRadians(0))
+      ),
+      cylinder: {
+        length: 80, // 圆柱体高度
+        topRadius: 23, // 圆柱体顶部半径
+        bottomRadius: 23, // 圆柱体底部半径
+        material: Cesium.Color.fromCssColorString('rgba(255, 255, 255, 0.01)'), // 材质
+        slices: 100, // 圆柱周围圆圈分段数
+        numberOfVerticalLines: 100 // 圆柱垂直线分段数
+      }
+    })
   })
 }
 
@@ -554,6 +600,69 @@ const boxFloodModel = (data: 'first' | 'second' | 'third' | 'four') => {
     }
   })
 }
+
+// 获取模型边界球和中心点
+const getModelInfo = async (tilesetUrl: string) => {
+  if (!viewer.value) return null
+  
+  try {
+    const tileset = await Cesium.Cesium3DTileset.fromUrl(tilesetUrl, {
+      viewer: viewer.value
+    })
+    
+    // 等待模型加载完成
+    await tileset.readyPromise
+    
+    // 获取边界球
+    const boundingSphere = tileset.boundingSphere
+    
+    // 将笛卡尔坐标转换为经纬度
+    const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center)
+    const longitude = Cesium.Math.toDegrees(cartographic.longitude)
+    const latitude = Cesium.Math.toDegrees(cartographic.latitude)
+    const height = cartographic.height
+    
+    console.log('📍 模型坐标信息:', {
+      经度: longitude,
+      纬度: latitude,
+      高度: height,
+      边界球半径: boundingSphere.radius
+    })
+    
+    // 返回世界坐标
+    return {
+      center: {
+        x: boundingSphere.center.x,
+        y: boundingSphere.center.y,
+        z: boundingSphere.center.z
+      },
+      longitude,
+      latitude,
+      height,
+      radius: boundingSphere.radius
+    }
+  } catch (error) {
+    console.error('获取模型信息失败:', error)
+    return null
+  }
+}
+
+// 获取模型尺寸
+const getModelDimensions = (radius: number) => {
+  return {
+    length: radius * 2,        // 长度约为直径
+    width: radius * 2 * 0.7,  // 宽度约为直径的70%
+    height: radius * 2.5        // 高度约为直径的2.5倍
+  }
+}
+
+// 暴露到全局，方便在控制台调用
+(window as any).getModelInfo = getModelInfo
+(window as any).getModelDimensions = getModelDimensions
+
+console.log('🔧 调试工具已加载，可在控制台使用:')
+console.log('  - getModelInfo("/模型路径/tileset.json") 获取模型坐标')
+console.log('  - getModelDimensions(radius) 根据半径获取尺寸')
 
 onMounted(async () => {
   // 设置 Cesium Ion 访问令牌
@@ -603,12 +712,9 @@ onMounted(async () => {
   // 启用自定义鼠标交互
   setupMouseInteractions()
 
-  // 加载本地的 3D Tiles 模型
-  if (buildingConfigs.length > 0) {
-    const config = buildingConfigs[0]
-    if (config) {
-      await loadBuilding(config)
-    }
+  // 加载所有楼栋的 3D Tiles 模型
+  for (const config of buildingConfigs) {
+    await loadBuilding(config)
   }
   
   // 初始化模型
@@ -715,18 +821,17 @@ const setupMouseInteractions = () => {
       // 获取点击位置的3D坐标
       const pickPosition = viewer.value?.scene.pickPosition(click.position)
       if (Cesium.defined(pickPosition)) {
-        console.log('📍 点击位置3D坐标:', {
-          x: pickPosition.x,
-          y: pickPosition.y,
-          z: pickPosition.z
-        })
-        
         // 将3D坐标转换为经纬度
         const cartographic = Cesium.Cartographic.fromCartesian(pickPosition)
         const longitude = Cesium.Math.toDegrees(cartographic.longitude)
         const latitude = Cesium.Math.toDegrees(cartographic.latitude)
         const height = cartographic.height
-        console.log('📍 点击位置经纬度:', { longitude, latitude, height })
+        
+        console.log('🎯 点击位置坐标（用于配置新楼栋）:', {
+          经度: longitude.toFixed(15),
+          纬度: latitude.toFixed(15),
+          高度: height.toFixed(2)
+        })
       }
       
       // 检查点击的对象类型
