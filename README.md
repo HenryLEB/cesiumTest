@@ -2,6 +2,18 @@
 
 这是一个使用 Vue3 和 Cesium.js 加载本地 3D Tiles 模型的项目。
 
+## ✨ 最新更新
+
+**v2.0 - 代码重构优化版本**
+
+- ✅ 模块化架构 - 代码从 1094 行优化到 200 行主组件
+- ✅ TypeScript 类型安全 - 100% 类型覆盖
+- ✅ 完善的资源管理 - 防止内存泄漏
+- ✅ 环境感知日志 - 开发/生产环境自动切换
+- ✅ 更好的可维护性 - 清晰的代码结构
+
+详见 [OPTIMIZATION.md](OPTIMIZATION.md) 和 [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
+
 ## 项目特性
 
 - ✨ Vue3 + TypeScript
@@ -140,8 +152,18 @@ viewer.value.scene.globe.show = false   // 隐藏地球
 ```
 cetest/
 ├── src/
+│   ├── types/
+│   │   └── building.ts          # TypeScript 类型定义
+│   ├── config/
+│   │   └── buildings.ts         # 楼栋配置数据
+│   ├── utils/
+│   │   ├── logger.ts            # 日志工具
+│   │   ├── cesiumHelper.ts      # Cesium 辅助函数
+│   │   ├── highlightManager.ts  # 单体化高亮管理
+│   │   ├── buildingManager.ts   # 楼栋管理
+│   │   └── interactionManager.ts # 交互管理
 │   ├── components/
-│   │   └── CesiumViewer.vue    # Cesium 查看器组件
+│   │   └── CesiumViewer.vue     # Cesium 查看器组件
 │   ├── App.vue                  # 主应用组件
 │   └── main.ts                  # 应用入口
 ├── public/
@@ -149,7 +171,10 @@ cetest/
 ├── index.html                   # HTML 模板
 ├── vite.config.ts              # Vite 配置
 ├── tsconfig.json               # TypeScript 配置
-└── package.json                # 项目依赖
+├── package.json                # 项目依赖
+├── OPTIMIZATION.md             # 优化详情 ⭐
+├── MIGRATION_GUIDE.md          # 迁移指南 ⭐
+└── OPTIMIZATION_SUMMARY.md     # 优化总结 ⭐
 ```
 
 ## 常见问题
