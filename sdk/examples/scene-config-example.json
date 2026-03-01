@@ -1,0 +1,87 @@
+{
+  "id": "example_scene",
+  "name": "示例场景",
+  "description": "这是一个示例场景配置文件",
+  "buildings": [
+    {
+      "id": "building1",
+      "name": "A栋",
+      "tilesetUrl": "/models/buildingA/tileset.json",
+      "monomerization": {
+        "autoDetect": true,
+        "style": {
+          "color": "#F26419",
+          "alpha": 0.6
+        }
+      },
+      "marker": {
+        "longitude": 113.06090721905448,
+        "latitude": 22.645399902809583,
+        "height": 85,
+        "style": {
+          "pointSize": 15,
+          "pointColor": "#FFFF00",
+          "labelFont": "16pt sans-serif",
+          "labelColor": "#FFFF00"
+        }
+      },
+      "info": {
+        "powerConsumption": "25410kw-h",
+        "waterConsumption": "1149m³",
+        "population": "56人",
+        "buildingArea": "5000㎡"
+      }
+    },
+    {
+      "id": "building2",
+      "name": "B栋",
+      "tilesetUrl": "/models/buildingB/tileset.json",
+      "monomerization": {
+        "manual": {
+          "center": {
+            "x": -2306930.0,
+            "y": 5418720.0,
+            "z": 2440500.0
+          },
+          "dimensions": {
+            "length": 55,
+            "width": 50,
+            "height": 160
+          },
+          "rotation": {
+            "heading": 0.4,
+            "pitch": 0,
+            "roll": 0
+          },
+          "offset": {
+            "x": -83,
+            "y": 50,
+            "z": 90
+          }
+        },
+        "style": {
+          "color": "#FF6B6B",
+          "alpha": 0.6
+        }
+      },
+      "marker": {
+        "longitude": 113.060277174873093,
+        "latitude": 22.645483701548006,
+        "height": 100
+      },
+      "info": {
+        "powerConsumption": "18500kw-h",
+        "waterConsumption": "950m³",
+        "population": "42人"
+      }
+    }
+  ],
+  "camera": {
+    "longitude": 113.06090721905448,
+    "latitude": 22.645399902809583,
+    "height": 1000,
+    "heading": 0,
+    "pitch": -90,
+    "roll": 0
+  }
+}

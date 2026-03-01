@@ -1,0 +1,36 @@
+{
+  "name": "cesium-monomerization-sdk",
+  "version": "1.0.0",
+  "description": "A universal SDK for Cesium 3D Tiles monomerization with configuration file support",
+  "main": "index.ts",
+  "types": "index.ts",
+  "keywords": [
+    "cesium",
+    "3d-tiles",
+    "monomerization",
+    "sdk",
+    "gis",
+    "3d"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "cesium": "^1.137.0"
+  },
+  "files": [
+    "core/",
+    "types/",
+    "examples/",
+    "index.ts",
+    "README.md",
+    "MIGRATION_TO_SDK.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": ""
+}
