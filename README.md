@@ -12,7 +12,18 @@
 - ✅ 环境感知日志 - 开发/生产环境自动切换
 - ✅ 更好的可维护性 - 清晰的代码结构
 
-详见 [OPTIMIZATION.md](OPTIMIZATION.md) 和 [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
+**v2.1 - 通用化改造版本** ⭐
+
+- ✅ 场景管理系统 - 支持多场景动态切换
+- ✅ 自动检测模式 - 自动识别模型边界
+- ✅ 通用单体化 - 不再绑定特定模型
+- ✅ 易于迁移 - 可快速应用到其他项目
+- ✅ 批量处理 - 支持批量生成配置
+
+详见:
+- [OPTIMIZATION.md](OPTIMIZATION.md) - 代码优化详情
+- [UNIVERSAL_GUIDE.md](UNIVERSAL_GUIDE.md) - 通用化使用指南 ⭐
+- [UNIVERSAL_SUMMARY.md](UNIVERSAL_SUMMARY.md) - 通用化改造总结 ⭐
 
 ## 项目特性
 
