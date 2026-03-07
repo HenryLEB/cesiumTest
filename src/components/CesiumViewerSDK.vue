@@ -249,7 +249,7 @@ const initSDK = async (): Promise<void> => {
 
   // 从配置文件加载场景
   try {
-    await sdk.loadSceneFromFile('/config/scene.json')
+    await sdk.loadSceneFromFile('/config/scene_aaa.json')  // ⭐ 切换到 AAA 模型
     console.log('✅ 场景配置加载成功')
   } catch (error) {
     console.error('❌ 加载场景配置失败:', error)

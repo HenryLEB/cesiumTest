@@ -62,8 +62,12 @@ export class SceneManager {
     }
 
     // 设置相机位置
-    if (scene.camera) {
+    if (scene.camera && scene.camera.longitude !== 0 && scene.camera.latitude !== 0) {
+      // 使用配置的相机位置
       this.setCameraPosition(scene.camera)
+    } else {
+      // 自动定位到第一个 Tileset
+      await this.autoPositionCamera()
     }
 
     this.currentSceneId = sceneId
@@ -146,6 +150,25 @@ export class SceneManager {
         roll: Cesium.Math.toRadians(camera.roll || 0)
       }
     })
+  }
+
+  /**
+   * 自动定位相机到模型
+   */
+  private async autoPositionCamera(): Promise<void> {
+    const primitives = this.viewer.scene.primitives
+    if (primitives.length > 0) {
+      const tileset = primitives.get(0) as Cesium.Cesium3DTileset
+      
+      // 使用 zoomTo 自动定位，俯视角度
+      await this.viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(
+        0,      // heading: 0 (正北)
+        -1.57,  // pitch: -90度 (俯视)
+        0       // range: 自动计算距离
+      ))
+      
+      logger.log('📷 相机已自动定位到模型')
+    }
   }
 
   /**
