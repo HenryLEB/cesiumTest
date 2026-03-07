@@ -45,6 +45,22 @@ export interface BuildingConfig {
   /** 信息配置 */
   info?: Record<string, string>
   
+  /** 自定义数据字段 - 用于 API 请求等扩展功能 */
+  customData?: {
+    buildingCode?: string      // 建筑编码
+    buildingType?: string      // 建筑类型（office, research, residential 等）
+    floor?: number             // 楼层数
+    area?: number              // 建筑面积（平方米）
+    department?: string        // 所属部门
+    constructionYear?: number  // 建造年份
+    manager?: string           // 负责人
+    phone?: string             // 联系电话
+    email?: string             // 联系邮箱
+    apiEndpoint?: string       // API 端点
+    extraParams?: Record<string, any>  // 额外参数
+    [key: string]: any         // 允许其他自定义字段
+  }
+  
   // 兼容旧格式（可选）
   center?: { x: number; y: number; z: number }
   dimensions?: { length: number; width: number; height: number }

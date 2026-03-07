@@ -112,8 +112,46 @@ const handleClick = (click: Cesium.ScreenSpaceEventHandler.PositionedEvent): voi
 
   const pickedObject = viewer.value.scene.pick(click.position)
 
+  // 获取点击位置的坐标（无论是否点击到物体）
+  const pickPosition = viewer.value.scene.pickPosition(click.position)
+  if (Cesium.defined(pickPosition)) {
+    const cartographic = Cesium.Cartographic.fromCartesian(pickPosition)
+    const longitude = Cesium.Math.toDegrees(cartographic.longitude)
+    const latitude = Cesium.Math.toDegrees(cartographic.latitude)
+    const height = cartographic.height
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('🎯 点击位置坐标信息:')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('📍 世界坐标 (用于 monomerization.manual.center):')
+    console.log('  X:', pickPosition.x)
+    console.log('  Y:', pickPosition.y)
+    console.log('  Z:', pickPosition.z)
+    console.log('')
+    console.log('🌍 经纬度坐标 (用于 marker):')
+    console.log('  经度 (longitude):', longitude)
+    console.log('  纬度 (latitude):', latitude)
+    console.log('  高度 (height):', height)
+    console.log('')
+    console.log('📋 配置文件格式 (复制使用):')
+    console.log('  "center": {')
+    console.log(`    "x": ${pickPosition.x},`)
+    console.log(`    "y": ${pickPosition.y},`)
+    console.log(`    "z": ${pickPosition.z}`)
+    console.log('  },')
+    console.log('  "marker": {')
+    console.log(`    "longitude": ${longitude},`)
+    console.log(`    "latitude": ${latitude},`)
+    console.log(`    "height": ${Math.round(height)}`)
+    console.log('  }')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  }
+
   if (Cesium.defined(pickedObject)) {
     console.log('✅ 点击到了物体')
+
+    // 标记是否点击了配置的建筑
+    let isConfiguredBuilding = false
 
     // 检查是否点击了实体
     if (pickedObject.id && pickedObject.id.name) {
@@ -122,20 +160,59 @@ const handleClick = (click: Cesium.ScreenSpaceEventHandler.PositionedEvent): voi
 
         // 支持点击黄色标记或透明圆柱体
         if (modelData.cesiumType === 'buildingMarker' || modelData.cesiumType === 'cylinderBuilding') {
+          isConfiguredBuilding = true
           const buildingId = modelData.buildingId
           console.log('🏢 点击的楼栋ID:', buildingId)
 
-          // 清除所有高亮
-          sdk.clearAllHighlights()
+          // 检查是否已经高亮
+          const existingHighlight = sdk.getHighlight(buildingId)
+          
+          if (existingHighlight) {
+            // 如果已经高亮，则取消高亮
+            console.log('🔄 取消高亮:', buildingId)
+            sdk.clearHighlight(buildingId)
+            sdk.hideBuildingInfo(buildingId)
+          } else {
+            // 如果未高亮，先清除其他高亮，再创建新高亮
+            console.log('🔄 切换高亮到:', buildingId)
+            sdk.clearAllHighlights()
+            
+            // 隐藏所有信息
+            const scene = sdk.getCurrentScene()
+            if (scene) {
+              const sdkRef = sdk  // Create a const reference for the callback
+              scene.buildings.forEach(building => {
+                sdkRef.hideBuildingInfo(building.id)
+              })
+            }
 
-          // 创建新高亮
-          sdk.createHighlight(buildingId)
+            // 创建新高亮
+            sdk.createHighlight(buildingId)
 
-          // 显示楼栋信息
-          sdk.showBuildingInfo(buildingId)
+            // 显示楼栋信息
+            sdk.showBuildingInfo(buildingId)
+          }
         }
       } catch (error) {
-        console.error('解析模型数据失败:', error)
+        // JSON 解析失败，说明不是配置的建筑实体
+        console.log('⚠️ 不是配置的建筑实体')
+      }
+    }
+
+    // 如果点击的不是配置的建筑（点击了 3D Tiles 模型的其他部分）
+    if (!isConfiguredBuilding) {
+      console.log('🏗️ 点击了其他建筑（非配置建筑），清除所有高亮')
+      
+      // 清除所有高亮
+      sdk.clearAllHighlights()
+
+      // 隐藏所有信息
+      const scene = sdk.getCurrentScene()
+      if (scene) {
+        const sdkRef = sdk
+        scene.buildings.forEach(building => {
+          sdkRef.hideBuildingInfo(building.id)
+        })
       }
     }
   } else {
@@ -255,31 +332,47 @@ const initSDK = async (): Promise<void> => {
     console.error('❌ 加载场景配置失败:', error)
   }
 
-  // 延迟显示默认高亮
-  setTimeout(async () => {
-    if (!sdk) return
-    
-    try {
-      const scene = sdk.getCurrentScene()
-      if (scene && scene.buildings && scene.buildings.length > 0) {
-        const firstBuilding = scene.buildings[0]
-        if (firstBuilding) {
-          await sdk.createHighlight(firstBuilding.id)
-          sdk.showBuildingInfo(firstBuilding.id)
-        }
-      }
-    } catch (error) {
-      console.error('❌ 创建默认高亮失败:', error)
-    }
-  }, 2000)
+  // 延迟显示默认高亮（已禁用）
+  // setTimeout(async () => {
+  //   if (!sdk) return
+  //   
+  //   try {
+  //     const scene = sdk.getCurrentScene()
+  //     if (scene && scene.buildings && scene.buildings.length > 0) {
+  //       const firstBuilding = scene.buildings[0]
+  //       if (firstBuilding) {
+  //         await sdk.createHighlight(firstBuilding.id)
+  //         sdk.showBuildingInfo(firstBuilding.id)
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('❌ 创建默认高亮失败:', error)
+  //   }
+  // }, 2000);
 
   // 暴露到全局（开发环境）
   if (import.meta.env.DEV) {
-    (window as any).sdk = sdk
-    console.log('🔧 SDK 已暴露到全局: window.sdk')
-    console.log('  - sdk.createHighlight("building1")')
-    console.log('  - sdk.clearAllHighlights()')
-    console.log('  - sdk.getCurrentScene()')
+    (window as any).sdk = sdk;
+    (window as any).viewer = viewer.value;
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('🔧 开发工具已启用')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('📦 全局变量:')
+    console.log('  window.sdk    - SDK 实例')
+    console.log('  window.viewer - Cesium Viewer 实例')
+    console.log('')
+    console.log('🎯 常用命令:')
+    console.log('  sdk.createHighlight("building_id")  - 创建高亮')
+    console.log('  sdk.clearAllHighlights()            - 清除所有高亮')
+    console.log('  sdk.getCurrentScene()               - 查看当前场景')
+    console.log('')
+    console.log('📍 获取模型信息:')
+    console.log('  const tileset = viewer.scene.primitives.get(0)')
+    console.log('  const center = tileset.boundingSphere.center')
+    console.log('  console.log("中心:", center.x, center.y, center.z)')
+    console.log('')
+    console.log('💡 提示: 点击模型会自动显示坐标信息！')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   }
 }
 
