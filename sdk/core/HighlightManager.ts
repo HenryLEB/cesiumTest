@@ -78,18 +78,38 @@ export class HighlightManager {
     // 获取样式配置
     const style = config.style || { color: '#F26419', alpha: 0.6 }
 
+    // 根据 shape 创建不同的几何体
+    let geometry: Cesium.Geometry
+    const shape = config.manual?.shape || 'box'
+
+    if (shape === 'cylinder') {
+      // 圆柱体
+      const radius = (dimensions as any).radius || 30
+      const height = dimensions.height
+      
+      geometry = new Cesium.CylinderGeometry({
+        length: height,
+        topRadius: radius,
+        bottomRadius: radius,
+        vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+      })
+    } else {
+      // 默认长方体
+      geometry = Cesium.BoxGeometry.fromDimensions({
+        vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+        dimensions: new Cesium.Cartesian3(
+          dimensions.length,
+          dimensions.width,
+          dimensions.height
+        )
+      })
+    }
+
     // 创建单体化图元
     const primitive = this.viewer.scene.primitives.add(
       new Cesium.ClassificationPrimitive({
         geometryInstances: new Cesium.GeometryInstance({
-          geometry: Cesium.BoxGeometry.fromDimensions({
-            vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
-            dimensions: new Cesium.Cartesian3(
-              dimensions.length,
-              dimensions.width,
-              dimensions.height
-            )
-          }),
+          geometry: geometry,
           modelMatrix: modelMatrix,
           attributes: {
             color: Cesium.ColorGeometryInstanceAttribute.fromColor(

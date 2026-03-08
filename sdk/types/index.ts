@@ -77,8 +77,12 @@ export interface MonomerizationConfig {
   autoDetect?: boolean
   /** 手动配置模式 */
   manual?: {
+    /** 形状类型：box（长方体）或 cylinder（圆柱体） */
+    shape?: 'box' | 'cylinder'
     center: { x: number; y: number; z: number }
-    dimensions: { length: number; width: number; height: number }
+    dimensions: 
+      | { length: number; width: number; height: number }  // 长方体
+      | { radius: number; height: number }                  // 圆柱体
     rotation?: { heading: number; pitch: number; roll: number }
     offset?: { x: number; y: number; z: number }
   }

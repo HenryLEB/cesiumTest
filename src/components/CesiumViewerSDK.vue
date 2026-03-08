@@ -164,6 +164,15 @@ const handleClick = (click: Cesium.ScreenSpaceEventHandler.PositionedEvent): voi
           const buildingId = modelData.buildingId
           console.log('🏢 点击的楼栋ID:', buildingId)
 
+          // 获取楼栋配置并打印 customData
+          const scene = sdk.getCurrentScene()
+          if (scene) {
+            const building = scene.buildings.find(b => b.id === buildingId)
+            if (building && building.customData) {
+              console.log('📋 楼栋自定义数据:', building.customData)
+            }
+          }
+
           // 检查是否已经高亮
           const existingHighlight = sdk.getHighlight(buildingId)
           
